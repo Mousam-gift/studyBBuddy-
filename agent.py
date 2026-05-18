@@ -1,7 +1,6 @@
 import os
 from dotenv import load_dotenv
 from google import genai
-from google.genai import types
 
 load_dotenv()
 client = genai.Client(api_key=os.getenv("Gemini_API_KEY"))
@@ -15,11 +14,34 @@ you are an AI assistant that works in 3 areas:
 Always mention which domain you are using.
 keep responses concise.
 """
-def smart_agent(message: str) -> str:
+def smart_agent(message, history):
+    contents = []
+    contents.append({
+        "role": "user",
+        "parts": [
+            {
+                "text": SYSTEM_PROMPT
+            }
+        ]
+    })
+    for msg in history:
+        role = msg["role"]
+        if role == "assistant":
+            role = "model"
+        contents.append({
+            "role": role,
+            "parts": [{"text": msg["content"]}]
+        })
+    contents.append({
+        "role": "user",
+        "parts": [
+            {
+                "text": message
+            }
+        ]
+    })
     response = client.models.generate_content(
         model="gemini-2.5-flash",
-        contents=[
-            genai.types.Content(role="user", parts=[genai.types.Part(text=SYSTEM_PROMPT + "\n\n" + message)])
-        ],
+        contents=contents
     )
     return response.text
